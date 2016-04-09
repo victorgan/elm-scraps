@@ -1,46 +1,55 @@
 module Main (..) where
 
 import Html exposing (Html)
-import Mouse
+import Html.Events as Events
 import Keyboard
+import Mouse
+
+
 
 type alias Model = { count : Int }
-
-type Action = NoOp | MouseClick | KeyPress
 
 -- state
 initialModel : Model
 initialModel = { count = 0 }
 
 
--- does nothing but display model
-view : Model -> Html
-view model = Html.text (toString model.count)
+type Action = NoOp | Increase
 
+
+-----------------------------------------------------------------
+-- View displays model and hooks div elements to actions
+-----------------------------------------------------------------
+view : Signal.Address Action -> Model -> Html
+view address model =
+  Html.div []
+    [ Html.div [] [ Html.text (toString model.count) ]
+    , Html.button [ Events.onClick address Increase ] [ Html.text "Click" ]
+    ]
+
+-----------------------------------------------------------------
+-- Logic to update model. Controller to centralize changes.
+-----------------------------------------------------------------
 updateModelCount : Action -> Model -> Model
 updateModelCount action model = case action of
     NoOp -> model
-    MouseClick -> { model | count = model.count + 1 }
-    KeyPress -> { model | count = model.count - 1 }
+    Increase -> { model | count = model.count + 1 }
 
 -----------------------------------------------------------------
--- Defining Signals.
+-- Actions to handle different user actions
 -----------------------------------------------------------------
-keyPressSignal : Signal.Signal Action
-keyPressSignal = Signal.map (\_ -> KeyPress) Keyboard.presses
+--actionSignal : Signal.Signal Action
+--actionSignal = Signal.merge mouseClickSignal keyPressSignal
 
-mouseClickSignal : Signal.Signal Action
-mouseClickSignal = Signal.map (\_ -> MouseClick) Mouse.clicks
+mb : Signal.Mailbox Action
+mb = Signal.mailbox NoOp
 
-actionSignal : Signal.Signal Action
-actionSignal = Signal.merge mouseClickSignal keyPressSignal
 
 -----------------------------------------------------------------
 -- Next State
 -----------------------------------------------------------------
 modelSignal : Signal.Signal Model
-modelSignal = Signal.foldp updateModelCount initialModel actionSignal
-
+modelSignal = Signal.foldp updateModelCount initialModel mb.signal
 
 main : Signal.Signal Html
-main = Signal.map view modelSignal
+main = Signal.map (view mb.address) modelSignal
