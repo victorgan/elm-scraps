@@ -1,5 +1,14 @@
-import Html
+module Main (..) where
 
-main : Html.Html
+import Html exposing (Html)
+import Mouse
+
+
+view : Int -> Html
+view x =
+  Html.text (toString x)
+
+
+main : Signal.Signal Html
 main =
-  Html.text "Hello world!"
+  Signal.map view Mouse.x
