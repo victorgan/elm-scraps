@@ -5,10 +5,16 @@ import Mouse
 
 
 view : Int -> Html
-view x =
-  Html.text (toString x)
+view count =
+  Html.text (toString count)
+
+
+countSignal : Signal Int
+countSignal =
+  Signal.foldp (\_ state -> state + 1) 0 Mouse.clicks
 
 
 main : Signal.Signal Html
-main =
-  Signal.map view Mouse.x
+main = Signal.map view countSignal
+
+-- Signal.map : (a -> result) -> Signal a -> Signal result
